@@ -1,6 +1,7 @@
 
-import { Shield, AlertTriangle, XCircle, CheckCircle } from 'lucide-react';
+import { Shield, AlertTriangle, XCircle, CheckCircle, Lock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { useEffect, useState } from 'react';
 
 interface ResultsProps {
   results: {
@@ -12,6 +13,16 @@ interface ResultsProps {
 
 const Results = ({ results }: ResultsProps) => {
   const { spamProbability, riskLevel } = results;
+  const [showResults, setShowResults] = useState(false);
+  
+  // Animate results appearing from encrypted state
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowResults(true);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
   
   const getRiskIcon = () => {
     switch (riskLevel) {
@@ -53,15 +64,31 @@ const Results = ({ results }: ResultsProps) => {
   };
 
   return (
-    <Card className="p-6 bg-slate-900/70 border-cyan-500/30 cyber-border backdrop-blur-sm animate-fade-in">
-      <div className="space-y-6">
-        <div className="flex items-center space-x-3">
-          <Shield className="h-6 w-6 text-cyan-400" />
-          <h2 className="text-xl font-semibold text-white">Analysis Results</h2>
+    <Card className="p-6 bg-slate-900/70 border-cyan-500/30 cyber-border backdrop-blur-sm animate-fade-in relative overflow-hidden">
+      {/* Encryption grid background */}
+      <div className="absolute inset-0 opacity-10 pointer-events-none">
+        <div className="grid grid-cols-20 grid-rows-10 gap-1 h-full w-full">
+          {Array.from({ length: 200 }).map((_, i) => (
+            <div key={i} className="bg-emerald-500 rounded-sm"></div>
+          ))}
+        </div>
+      </div>
+      
+      <div className="space-y-6 relative z-10">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <Shield className="h-6 w-6 text-cyan-400" />
+            <h2 className="text-xl font-semibold text-white">Analysis Results</h2>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Lock className="h-4 w-4 text-emerald-400" />
+            <span className="text-xs text-emerald-400 font-mono">End-to-End Encrypted</span>
+          </div>
         </div>
         
         <div className="text-center space-y-6">
-          <div className="space-y-4">
+          <div className={`space-y-4 transition-all duration-1000 ${showResults ? 'opacity-100' : 'opacity-0'}`}>
             <div className="flex items-center justify-center space-x-3">
               {getRiskIcon()}
               <div>
@@ -97,7 +124,15 @@ const Results = ({ results }: ResultsProps) => {
           </div>
           
           <div className="text-sm text-gray-400 space-y-2">
-            <p className="font-medium text-white">Analysis Summary:</p>
+            <div className="flex items-center justify-center space-x-2">
+              <p className="font-medium text-white">Homomorphic Analysis Summary:</p>
+              <div className="group relative">
+                <span className="cursor-help text-cyan-400">ℹ️</span>
+                <div className="invisible group-hover:visible absolute bottom-full mb-2 w-64 bg-slate-800 p-2 rounded text-xs border border-cyan-500/30">
+                  Results generated through homomorphic encryption, allowing computation on encrypted data without exposing the original content.
+                </div>
+              </div>
+            </div>
             {riskLevel === 'Low' && (
               <p>This email appears to be legitimate with minimal spam indicators detected.</p>
             )}
@@ -107,6 +142,13 @@ const Results = ({ results }: ResultsProps) => {
             {riskLevel === 'High' && (
               <p>This email shows strong spam characteristics. Avoid clicking links or providing information.</p>
             )}
+          </div>
+        </div>
+        
+        <div className="text-xs text-center text-gray-500 font-mono pt-4 border-t border-gray-700">
+          <div className="flex items-center justify-center space-x-1">
+            <Lock className="h-3 w-3" />
+            <span>Privacy-preserving analysis completed with homomorphic encryption</span>
           </div>
         </div>
       </div>
