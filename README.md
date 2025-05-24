@@ -1,4 +1,7 @@
-# Welcome to your Lovable project
+
+# SpamGuard AI
+
+A privacy-focused spam detection system using homomorphic encryption to analyze emails while keeping data encrypted throughout the process.
 
 ## Project info
 
@@ -27,7 +30,7 @@ Follow these steps:
 git clone <YOUR_GIT_URL>
 
 # Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+cd spamguard-ai
 
 # Step 3: Install the necessary dependencies.
 npm i
