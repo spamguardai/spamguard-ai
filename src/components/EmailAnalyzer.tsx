@@ -1,4 +1,3 @@
-
 import { Card } from '@/components/ui/card';
 import Results from './Results';
 import EmailInput from './email-analyzer/EmailInput';
@@ -15,6 +14,7 @@ const EmailAnalyzer = () => {
     processingStage,
     processingProgress,
     results,
+    encryptedResult,
     encryptEmail,
     analyzeEmail,
     handleTextChange
@@ -38,6 +38,7 @@ const EmailAnalyzer = () => {
             isProcessing={isEncrypting || isAnalyzing}
             processingStage={processingStage}
             processingProgress={processingProgress}
+            encryptedResult={encryptedResult}
           />
         </div>
         

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 
 export const useEmailAnalysis = () => {
@@ -13,30 +12,25 @@ export const useEmailAnalysis = () => {
     riskLevel: 'Low' | 'Medium' | 'High';
     analysisComplete: boolean;
   } | null>(null);
+  const [encryptedResult, setEncryptedResult] = useState<string | null>(null);
 
-  const simulateProcess = async (percentage: number, stage: string) => {
-    const startProgress = processingProgress;
-    const endProgress = startProgress + percentage;
+  const simulateProcess = async (_percentage: number, stage: string) => {
     setProcessingStage(stage);
-    
+    setProcessingProgress(0);
     return new Promise<void>(resolve => {
       const duration = 1000 + Math.random() * 1000;
       const startTime = Date.now();
-      
       const updateProgress = () => {
         const elapsedTime = Date.now() - startTime;
         const progress = Math.min(elapsedTime / duration, 1);
-        const currentProgress = startProgress + progress * percentage;
-        
-        setProcessingProgress(Math.round(currentProgress));
-        
+        const currentProgress = Math.round(progress * 100);
+        setProcessingProgress(currentProgress);
         if (progress < 1) {
           requestAnimationFrame(updateProgress);
         } else {
           resolve();
         }
       };
-      
       requestAnimationFrame(updateProgress);
     });
   };
@@ -49,11 +43,27 @@ export const useEmailAnalysis = () => {
     setEncryptedView(false);
     setProcessingStage('Encrypting Data');
     setProcessingProgress(0);
+    setEncryptedResult(null);
     
-    // Simulate encryption process
-    await simulateProcess(100, 'Encrypting Data');
-    
-    setEncryptedView(true);
+    const progressPromise = simulateProcess(100, 'Encrypting Data');
+    const apiPromise = fetch('http://localhost:8000/encrypt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: emailContent }),
+    }).then(async (response) => {
+      if (!response.ok) throw new Error('서버 오류');
+      return response.json();
+    });
+
+    try {
+      const [data] = await Promise.all([apiPromise, progressPromise]);
+      setEncryptedResult(data.encrypted);
+      setEncryptedView(true);
+    } catch (e) {
+      await progressPromise;
+      setEncryptedResult('encryption example');
+      setEncryptedView(true); // 암호화 실패 시 대체 결과 표시
+    }
     setIsEncrypting(false);
   };
 
@@ -126,6 +136,7 @@ export const useEmailAnalysis = () => {
     if (encryptedView) {
       setEncryptedView(false);
     }
+    setEncryptedResult(null);
   };
 
   return {
@@ -136,6 +147,7 @@ export const useEmailAnalysis = () => {
     processingStage,
     processingProgress,
     results,
+    encryptedResult,
     encryptEmail,
     analyzeEmail,
     handleTextChange

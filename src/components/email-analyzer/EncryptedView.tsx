@@ -1,4 +1,3 @@
-
 import { Lock } from 'lucide-react';
 import EncryptionVisualizer from '../EncryptionVisualizer';
 import ProcessingOverlay from './ProcessingOverlay';
@@ -9,6 +8,7 @@ interface EncryptedViewProps {
   isProcessing: boolean;
   processingStage: string;
   processingProgress: number;
+  encryptedResult: string | null;
 }
 
 const EncryptedView = ({
@@ -16,7 +16,8 @@ const EncryptedView = ({
   encryptedView,
   isProcessing,
   processingStage,
-  processingProgress
+  processingProgress,
+  encryptedResult
 }: EncryptedViewProps) => {
   return (
     <div className="space-y-4">
@@ -27,7 +28,7 @@ const EncryptedView = ({
       
       <div className="relative h-64 bg-slate-800/80 border border-emerald-500/30 rounded-lg overflow-hidden">
         <EncryptionVisualizer 
-          text={text} 
+          text={encryptedResult ?? text} 
           isEncrypted={encryptedView} 
           isProcessing={isProcessing} 
         />
