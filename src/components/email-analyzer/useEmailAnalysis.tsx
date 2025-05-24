@@ -68,62 +68,39 @@ export const useEmailAnalysis = () => {
   };
 
   const analyzeEmail = async () => {
-    if (!emailContent.trim() || !encryptedView) return;
-    
+    if (!emailContent.trim() || !encryptedView || !encryptedResult) return;
     setIsAnalyzing(true);
     setResults(null);
     setProcessingProgress(0);
-    
-    // Simulate homomorphic computation
-    await simulateProcess(50, 'Homomorphic Operations');
-    
-    // Simulate pattern analysis
-    await simulateProcess(50, 'Pattern Analysis');
-    
-    // Generate realistic spam probability based on common spam indicators
-    const spamIndicators = [
-      /urgent/gi,
-      /limited time/gi,
-      /act now/gi,
-      /free/gi,
-      /winner/gi,
-      /congratulations/gi,
-      /click here/gi,
-      /\$\d+/g,
-      /100%/gi,
-      /guarantee/gi
-    ];
-    
-    let spamScore = Math.random() * 30; // Base random score 0-30%
-    
-    spamIndicators.forEach(indicator => {
-      const matches = emailContent.match(indicator);
-      if (matches) {
-        spamScore += matches.length * 15; // Add 15% per match
-      }
+
+    // 진행률 애니메이션
+    const progressPromise = simulateProcess(100, 'Analyzing Encrypted Data');
+    // FastAPI 서버에 POST 요청
+    const apiPromise = fetch('http://localhost:8000/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ encrypted: encryptedResult }),
+    }).then(async (response) => {
+      if (!response.ok) throw new Error('서버 오류');
+      return response.json();
     });
-    
-    // Add score for excessive punctuation
-    const exclamationCount = (emailContent.match(/!/g) || []).length;
-    spamScore += exclamationCount * 5;
-    
-    // Add score for ALL CAPS
-    const capsWords = emailContent.match(/\b[A-Z]{3,}\b/g) || [];
-    spamScore += capsWords.length * 8;
-    
-    spamScore = Math.min(spamScore, 95); // Cap at 95%
-    const spamProbability = Math.round(spamScore);
-    
-    let riskLevel: 'Low' | 'Medium' | 'High' = 'Low';
-    if (spamProbability >= 70) riskLevel = 'High';
-    else if (spamProbability >= 40) riskLevel = 'Medium';
-    
-    setResults({
-      spamProbability,
-      riskLevel,
-      analysisComplete: true
-    });
-    
+
+    try {
+      const [data] = await Promise.all([apiPromise, progressPromise]);
+      // 서버에서 spamProbability, riskLevel을 반환한다고 가정
+      setResults({
+        spamProbability: data.spamProbability,
+        riskLevel: data.riskLevel,
+        analysisComplete: true
+      });
+    } catch (e) {
+      await progressPromise;
+      setResults({
+        spamProbability: 0,
+        riskLevel: 'Low',
+        analysisComplete: true
+      });
+    }
     setIsAnalyzing(false);
   };
 
