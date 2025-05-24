@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef } from 'react';
-import { Zap, Loader2, Lock, Shield } from 'lucide-react';
+import { Zap, Loader2, Lock, Shield, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Results from './Results';
@@ -8,6 +8,7 @@ import EncryptionVisualizer from './EncryptionVisualizer';
 
 const EmailAnalyzer = () => {
   const [emailContent, setEmailContent] = useState('');
+  const [isEncrypting, setIsEncrypting] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [encryptedView, setEncryptedView] = useState(false);
   const [processingStage, setProcessingStage] = useState<string>('');
@@ -18,23 +19,34 @@ const EmailAnalyzer = () => {
     analysisComplete: boolean;
   } | null>(null);
 
-  const analyzeEmail = async () => {
+  const encryptEmail = async () => {
     if (!emailContent.trim()) return;
     
-    setIsAnalyzing(true);
+    setIsEncrypting(true);
     setResults(null);
-    setEncryptedView(true);
+    setEncryptedView(false);
     setProcessingStage('Encrypting Data');
     setProcessingProgress(0);
     
     // Simulate encryption process
-    await simulateProcess(20, 'Encrypting Data');
+    await simulateProcess(100, 'Encrypting Data');
+    
+    setEncryptedView(true);
+    setIsEncrypting(false);
+  };
+
+  const analyzeEmail = async () => {
+    if (!emailContent.trim() || !encryptedView) return;
+    
+    setIsAnalyzing(true);
+    setResults(null);
+    setProcessingProgress(0);
     
     // Simulate homomorphic computation
     await simulateProcess(50, 'Homomorphic Operations');
     
     // Simulate pattern analysis
-    await simulateProcess(30, 'Pattern Analysis');
+    await simulateProcess(50, 'Pattern Analysis');
     
     // Generate realistic spam probability based on common spam indicators
     const spamIndicators = [
@@ -112,9 +124,11 @@ const EmailAnalyzer = () => {
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setEmailContent(e.target.value);
-    // Reset results when text changes
+    // Reset results and encrypted view when text changes
     if (results) {
       setResults(null);
+    }
+    if (encryptedView) {
       setEncryptedView(false);
     }
   };
@@ -136,7 +150,7 @@ const EmailAnalyzer = () => {
                 onChange={handleTextChange}
                 placeholder="Paste your email content here for secure analysis..."
                 className="w-full h-64 p-4 bg-slate-800/80 border border-cyan-500/30 rounded-lg text-white placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all duration-300"
-                disabled={isAnalyzing}
+                disabled={isEncrypting || isAnalyzing}
               />
             </div>
           </div>
@@ -152,10 +166,10 @@ const EmailAnalyzer = () => {
               <EncryptionVisualizer 
                 text={emailContent} 
                 isEncrypted={encryptedView} 
-                isProcessing={isAnalyzing} 
+                isProcessing={isEncrypting || isAnalyzing} 
               />
               
-              {isAnalyzing && (
+              {(isEncrypting || isAnalyzing) && (
                 <div className="absolute inset-0 bg-slate-800/90 backdrop-blur-sm flex items-center justify-center">
                   <div className="text-center space-y-4">
                     <Loader2 className="h-12 w-12 text-emerald-400 animate-spin mx-auto" />
@@ -178,23 +192,43 @@ const EmailAnalyzer = () => {
           </div>
         </div>
         
-        <Button
-          onClick={analyzeEmail}
-          disabled={!emailContent.trim() || isAnalyzing}
-          className="w-full mt-6 bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-500 hover:to-blue-500 text-white font-mono py-3 rounded-lg transition-all duration-300 neon-glow disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isAnalyzing ? (
-            <div className="flex items-center space-x-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Processing Encrypted Data...</span>
-            </div>
-          ) : (
-            <div className="flex items-center space-x-2">
-              <Lock className="h-4 w-4" />
-              <span>Encrypt & Analyze</span>
-            </div>
-          )}
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-4 mt-6">
+          <Button
+            onClick={encryptEmail}
+            disabled={!emailContent.trim() || isEncrypting || isAnalyzing || encryptedView}
+            className="flex-1 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-mono py-3 rounded-lg transition-all duration-300 neon-glow disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isEncrypting ? (
+              <div className="flex items-center space-x-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Encrypting Data...</span>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Lock className="h-4 w-4" />
+                <span>Encrypt Data</span>
+              </div>
+            )}
+          </Button>
+          
+          <Button
+            onClick={analyzeEmail}
+            disabled={!encryptedView || isAnalyzing || isEncrypting}
+            className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-mono py-3 rounded-lg transition-all duration-300 neon-glow disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isAnalyzing ? (
+              <div className="flex items-center space-x-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Analyzing Encrypted Data...</span>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Search className="h-4 w-4" />
+                <span>Analyze</span>
+              </div>
+            )}
+          </Button>
+        </div>
       </Card>
       
       {results && <Results results={results} />}
