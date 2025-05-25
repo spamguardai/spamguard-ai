@@ -13,6 +13,7 @@ export const useEmailAnalysis = () => {
     analysisComplete: boolean;
   } | null>(null);
   const [encryptedResult, setEncryptedResult] = useState<string | null>(null);
+  const [importantIndices, setImportantIndices] = useState<number[] | null>(null);
 
   const simulateProcess = async (_percentage: number, stage: string) => {
     setProcessingStage(stage);
@@ -44,12 +45,13 @@ export const useEmailAnalysis = () => {
     setProcessingStage('Encrypting Data');
     setProcessingProgress(0);
     setEncryptedResult(null);
+    setImportantIndices(null);
     
     const progressPromise = simulateProcess(100, 'Encrypting Data');
-    const apiPromise = fetch('http://localhost:8000/encrypt', {
+    const apiPromise = fetch('http://localhost:5000/encrypt', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: emailContent }),
+      body: JSON.stringify({ text: emailContent }),
     }).then(async (response) => {
       if (!response.ok) throw new Error('서버 오류');
       return response.json();
@@ -57,40 +59,54 @@ export const useEmailAnalysis = () => {
 
     try {
       const [data] = await Promise.all([apiPromise, progressPromise]);
-      setEncryptedResult(data.encrypted);
+      // encrypted_vector: string[], important_indices: number[]
+      setEncryptedResult(Array.isArray(data.encrypted_vector) ? data.encrypted_vector.join(', ') : String(data.encrypted_vector));
+      setImportantIndices(Array.isArray(data.important_indices) ? data.important_indices : []);
       setEncryptedView(true);
     } catch (e) {
       await progressPromise;
       setEncryptedResult('encryption example');
+      setImportantIndices(null);
       setEncryptedView(true); // 암호화 실패 시 대체 결과 표시
     }
     setIsEncrypting(false);
   };
 
   const analyzeEmail = async () => {
-    if (!emailContent.trim() || !encryptedView || !encryptedResult) return;
+    if (!emailContent.trim() || !encryptedView || !encryptedResult || !importantIndices) return;
     setIsAnalyzing(true);
     setResults(null);
     setProcessingProgress(0);
 
-    // 진행률 애니메이션
     const progressPromise = simulateProcess(100, 'Analyzing Encrypted Data');
-    // FastAPI 서버에 POST 요청
-    const apiPromise = fetch('http://localhost:8000/analyze', {
+
+    // 1. 암호화된 예측 결과 받기
+    const predictPromise = fetch('http://localhost:5001/encrypted-predict', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ encrypted: encryptedResult }),
+      body: JSON.stringify({
+        encrypted_vector: Array.isArray(encryptedResult) ? encryptedResult : String(encryptedResult).split(',').map(s => s.trim()),
+        important_indices: importantIndices
+      }),
     }).then(async (response) => {
       if (!response.ok) throw new Error('서버 오류');
       return response.json();
     });
 
     try {
-      const [data] = await Promise.all([apiPromise, progressPromise]);
-      // 서버에서 spamProbability, riskLevel을 반환한다고 가정
+      const [predictData] = await Promise.all([predictPromise, progressPromise]);
+      // 2. 복호화 요청
+      const decryptResponse = await fetch('http://localhost:5000/decrypt-result', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ encrypted_result: predictData.encrypted_result }),
+      });
+      if (!decryptResponse.ok) throw new Error('복호화 서버 오류');
+      const decryptData = await decryptResponse.json();
+
       setResults({
-        spamProbability: data.spamProbability,
-        riskLevel: data.riskLevel,
+        spamProbability: decryptData.decrypted_value.real,
+        riskLevel: decryptData.decrypted_value.real >= 70 ? 'High' : decryptData.decrypted_value.real >= 40 ? 'Medium' : 'Low',
         analysisComplete: true
       });
     } catch (e) {
@@ -125,6 +141,7 @@ export const useEmailAnalysis = () => {
     processingProgress,
     results,
     encryptedResult,
+    importantIndices,
     encryptEmail,
     analyzeEmail,
     handleTextChange
