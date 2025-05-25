@@ -68,9 +68,9 @@ export const useEmailAnalysis = () => {
       setEncryptedView(true);
     } catch (e) {
       await progressPromise;
-      setEncryptedVector('encryption example');
-      setEncryptedCoef(null);
-      setEncryptedIntercept(null);
+      setEncryptedVector(encryptedVector);
+      setEncryptedCoef(encryptedCoef);
+      setEncryptedIntercept(encryptedIntercept);
       setEncryptedView(true); // 암호화 실패 시 대체 결과 표시
     }
     setIsEncrypting(false);
