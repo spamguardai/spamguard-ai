@@ -8,8 +8,7 @@ export const useEmailAnalysis = () => {
   const [processingStage, setProcessingStage] = useState<string>('');
   const [processingProgress, setProcessingProgress] = useState(0);
   const [results, setResults] = useState<{
-    spamProbability: number;
-    riskLevel: 'Low' | 'Medium' | 'High';
+    isSpam: 'yes' | 'no';
     analysisComplete: boolean;
   } | null>(null);
   const [encryptedVector, setEncryptedVector] = useState<string | null>(null);
@@ -109,15 +108,13 @@ export const useEmailAnalysis = () => {
       const decryptData = await decryptResponse.json();
 
       setResults({
-        spamProbability: decryptData.decrypted_value.real,
-        riskLevel: decryptData.decrypted_value.real >= 70 ? 'High' : decryptData.decrypted_value.real >= 40 ? 'Medium' : 'Low',
+        isSpam: decryptData.decrypted_value.real > 0 ? 'yes' : 'no',
         analysisComplete: true
       });
     } catch (e) {
       await progressPromise;
       setResults({
-        spamProbability: 0,
-        riskLevel: 'Low',
+        isSpam: 'no',
         analysisComplete: true
       });
     }
