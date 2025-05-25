@@ -17,7 +17,6 @@ const EmailAnalyzer = () => {
     encryptedVector,
     encryptedCoef,
     encryptedIntercept,
-    importantIndices,
     encryptEmail,
     analyzeEmail,
     handleTextChange
@@ -42,7 +41,6 @@ const EmailAnalyzer = () => {
             processingStage={processingStage}
             processingProgress={processingProgress}
             encryptedVector={encryptedVector}
-            importantIndices={importantIndices}
           />
         </div>
         

@@ -9,7 +9,6 @@ interface EncryptedViewProps {
   processingStage: string;
   processingProgress: number;
   encryptedVector: string | null;
-  importantIndices: number[] | null;
 }
 
 const EncryptedView = ({
@@ -19,7 +18,6 @@ const EncryptedView = ({
   processingStage,
   processingProgress,
   encryptedVector,
-  importantIndices
 }: EncryptedViewProps) => {
   return (
     <div className="space-y-4">
