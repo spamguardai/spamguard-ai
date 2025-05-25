@@ -12,7 +12,9 @@ export const useEmailAnalysis = () => {
     riskLevel: 'Low' | 'Medium' | 'High';
     analysisComplete: boolean;
   } | null>(null);
-  const [encryptedResult, setEncryptedResult] = useState<string | null>(null);
+  const [encryptedVector, setEncryptedVector] = useState<string | null>(null);
+  const [encryptedCoef, setEncryptedCoef] = useState<string[] | null>(null);
+  const [encryptedIntercept, setEncryptedIntercept] = useState<string | null>(null);
   const [importantIndices, setImportantIndices] = useState<number[] | null>(null);
 
   const simulateProcess = async (_percentage: number, stage: string) => {
@@ -44,7 +46,9 @@ export const useEmailAnalysis = () => {
     setEncryptedView(false);
     setProcessingStage('Encrypting Data');
     setProcessingProgress(0);
-    setEncryptedResult(null);
+    setEncryptedVector(null);
+    setEncryptedCoef(null);
+    setEncryptedIntercept(null);
     setImportantIndices(null);
     
     const progressPromise = simulateProcess(100, 'Encrypting Data');
@@ -60,12 +64,16 @@ export const useEmailAnalysis = () => {
     try {
       const [data] = await Promise.all([apiPromise, progressPromise]);
       // encrypted_vector: string[], important_indices: number[]
-      setEncryptedResult(Array.isArray(data.encrypted_vector) ? data.encrypted_vector.join(', ') : String(data.encrypted_vector));
+      setEncryptedVector(Array.isArray(data.encrypted_vector) ? data.encrypted_vector.join(', ') : String(data.encrypted_vector));
+      setEncryptedCoef(Array.isArray(data.encrypted_coef) ? data.encrypted_coef : [String(data.encrypted_coef)]);
+      setEncryptedIntercept(String(data.encrypted_intercept));
       setImportantIndices(Array.isArray(data.important_indices) ? data.important_indices : []);
       setEncryptedView(true);
     } catch (e) {
       await progressPromise;
-      setEncryptedResult('encryption example');
+      setEncryptedVector('encryption example');
+      setEncryptedCoef(null);
+      setEncryptedIntercept(null);
       setImportantIndices(null);
       setEncryptedView(true); // 암호화 실패 시 대체 결과 표시
     }
@@ -73,19 +81,17 @@ export const useEmailAnalysis = () => {
   };
 
   const analyzeEmail = async () => {
-    if (!emailContent.trim() || !encryptedView || !encryptedResult || !importantIndices) return;
+    if (!emailContent.trim() || !encryptedView || !encryptedVector || !importantIndices) return;
     setIsAnalyzing(true);
     setResults(null);
     setProcessingProgress(0);
-
     const progressPromise = simulateProcess(100, 'Analyzing Encrypted Data');
-
     // 1. 암호화된 예측 결과 받기
     const predictPromise = fetch('http://localhost:5001/encrypted-predict', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        encrypted_vector: Array.isArray(encryptedResult) ? encryptedResult : String(encryptedResult).split(',').map(s => s.trim()),
+        encrypted_vector: Array.isArray(encryptedVector) ? encryptedVector : String(encryptedVector).split(',').map(s => s.trim()),
         important_indices: importantIndices
       }),
     }).then(async (response) => {
@@ -129,7 +135,7 @@ export const useEmailAnalysis = () => {
     if (encryptedView) {
       setEncryptedView(false);
     }
-    setEncryptedResult(null);
+    setEncryptedVector(null);
   };
 
   return {
@@ -140,7 +146,9 @@ export const useEmailAnalysis = () => {
     processingStage,
     processingProgress,
     results,
-    encryptedResult,
+    encryptedVector,
+    encryptedCoef,
+    encryptedIntercept,
     importantIndices,
     encryptEmail,
     analyzeEmail,

@@ -8,7 +8,8 @@ interface EncryptedViewProps {
   isProcessing: boolean;
   processingStage: string;
   processingProgress: number;
-  encryptedResult: string | null;
+  encryptedVector: string | null;
+  importantIndices: number[] | null;
 }
 
 const EncryptedView = ({
@@ -17,7 +18,8 @@ const EncryptedView = ({
   isProcessing,
   processingStage,
   processingProgress,
-  encryptedResult
+  encryptedVector,
+  importantIndices
 }: EncryptedViewProps) => {
   return (
     <div className="space-y-4">
@@ -28,7 +30,7 @@ const EncryptedView = ({
       
       <div className="relative h-64 bg-slate-800/80 border border-emerald-500/30 rounded-lg overflow-hidden">
         <EncryptionVisualizer 
-          text={encryptedResult ?? text} 
+          text={encryptedVector ?? text} 
           isEncrypted={encryptedView} 
           isProcessing={isProcessing} 
         />
