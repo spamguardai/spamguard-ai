@@ -50,7 +50,7 @@ export const useEmailAnalysis = () => {
 
     
     const progressPromise = simulateProcess(100, 'Encrypting Data');
-    const apiPromise = fetch('http://localhost:5000/encrypt', {
+    const apiPromise = fetch('http://localhost:5002/encrypt', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: emailContent }),
@@ -99,7 +99,7 @@ export const useEmailAnalysis = () => {
     try {
       const [predictData] = await Promise.all([predictPromise, progressPromise]);
       // 2. 복호화 요청
-      const decryptResponse = await fetch('http://localhost:5000/decrypt-result', {
+      const decryptResponse = await fetch('http://localhost:5002/decrypt-result', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ encrypted_result: predictData.encrypted_result }),
